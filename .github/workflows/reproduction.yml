@@ -13,10 +13,12 @@ jobs:
     strategy:
       matrix:
         runner: [macos-latest, ubuntu-latest]
-        include-module: [true, false]
+        include-module: [ON, OFF]
       fail-fast: false
     runs-on: ${{ matrix.runner }}
     steps:
+      - uses: actions/checkout@v3
+
       - uses: Homebrew/actions/setup-homebrew@master
         with:
           test-bot: false
@@ -28,15 +30,4 @@ jobs:
 
       - run: brew install cmake grpc
 
-      - run: |
-          export CMAKE_PREFIX_PATH="$(brew --prefix grpc)"
-
-          cat <<CMAKELISTS > CMakeLists.txt
-          cmake_minimum_required(VERSION 3.10)
-          project(test CXX)
-          ${{ matrix.include-module && 'include(CMakeFindDependencyMacro)' || '' }}
-          find_package(gRPC REQUIRED)
-          CMAKELISTS
-
-          cat CMakeLists.txt
-          cmake .
+      - run: cmake . -DINCLUDE_FIND_DEPENDENCY_MACRO_MODULE="${{ matrix.include-module }}"
