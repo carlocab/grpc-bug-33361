@@ -1,0 +1,37 @@
+on:
+  - push
+  - workflow_dispatch
+
+env:
+  HOMEBREW_NO_AUTO_UPDATE: 1
+  HOMEBREW_NO_INSTALL_FROM_API: 1
+
+jobs:
+  error:
+    strategy:
+      matrix:
+        runner: [macos-latest, ubuntu-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: Homebrew/actions/setup-homebrew@master
+        with:
+          test-bot: false
+
+      - name: Check out unpatched gRPC version
+        run: |
+          cd "$(brew --repository homebrew/core)"
+          git checkout 60b65d5104308b263b04d49dad8ff07d3776881a
+
+      - run: brew install cmake grpc
+
+      - run: |
+          export CMAKE_PREFIX_PATH="$(brew --prefix grpc)"
+
+          cat <<CMAKELISTS > CMakeLists.txt
+          cmake_minimum_required(VERSION 3.10)
+          project(test CXX)
+          find_package(gRPC REQUIRED)
+          CMAKELISTS
+
+          cmake .
