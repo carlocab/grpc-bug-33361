@@ -1,3 +1,5 @@
+name: Reproduce grpc/grpc#33361
+
 on:
   - push
   - workflow_dispatch
@@ -11,6 +13,7 @@ jobs:
     strategy:
       matrix:
         runner: [macos-latest, ubuntu-latest]
+        include-module: [true, false]
       fail-fast: false
     runs-on: ${{ matrix.runner }}
     steps:
@@ -31,7 +34,9 @@ jobs:
           cat <<CMAKELISTS > CMakeLists.txt
           cmake_minimum_required(VERSION 3.10)
           project(test CXX)
+          ${{ matrix.include-module && 'include(CMakeFindDependencyMacro)' || '' }}
           find_package(gRPC REQUIRED)
           CMAKELISTS
 
+          cat CMakeLists.txt
           cmake .
